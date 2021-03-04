@@ -2,7 +2,7 @@
   "swagger": "2.0",
   "info": {
     "title": "Azure Maps Conversion Service",
-    "version": "1.0",
+    "version": "2.0",
     "description": "APIs for converting DWG Packages in Azure Maps."
   },
   "host": "atlas.microsoft.com",
@@ -75,27 +75,19 @@
         "$ref": "#/definitions/ODataErrorResponse"
       }
     },
-    "201Async": {
+    "201": {
       "description": "The resource has been created successfully.",
       "schema": {
-        "$ref": "#/definitions/LongRunningOperationResult"
-      },
-      "headers": {
-        "Location": {
-          "type": "string",
-          "description": "A URI where details on the newly created resource can be found."
-        }
+        "$ref": "#/definitions/ConversionListDetailInfo"
       }
     },
-    "202Async": {
-      "description": "**Supported only for async request.**\nRequest Accepted: The request has been accepted for processing. Please use the URL in the Location Header to retry or access the results.",
-      "headers": {
-        "Location": {
-          "type": "string",
-          "description": "New URL to check for the results of the long running process."
-        }
+    "200": {
+      "description": "The resource.",
+      "schema": {
+        "$ref":  "#/definitions/ConversionListDetailInfo"
       }
     }
+
   },
   "parameters": {
     "ClientId": {
@@ -120,7 +112,7 @@
       "type": "string",
       "in": "query",
       "required": true,
-      "default": "1.0",
+      "default": "2.0",
       "x-ms-parameter-location": "client"
     },
     "UdidQuery": {
@@ -170,8 +162,8 @@
     }
   },
   "paths": {
-    "/conversion/convert": {
-      "post": {
+    "/conversions/{conversionId}": {
+      "put": {
         "x-publish": true,
         "description": "**Conversion Create API**\n\n**Applies to:** S1 pricing tier.<br>\n\nCreator makes it possible to develop applications based on your private indoor map data using Azure Maps API and \nSDK. The Conversion API is part of Creator.<br>\n\nThe Conversion API lets the caller import a set of DWG design files as a zipped [Drawing Package](https://aka.ms/am-drawing-package) into Azure Maps. The [Drawing Package](https://aka.ms/am-drawing-package) should first be \nuploaded using the [Azure Maps Data Service](https://docs.microsoft.com/rest/api/maps/data). Once uploaded, use the \n`udid` returned by the [Data Upload API](https://docs.microsoft.com/rest/api/maps/data/uploadpreview) to call \nthis Conversion API.\n\n## Convert DWG package\n\nThe Conversion API performs a \n[long-running request](https://aka.ms/am-creator-lrt).\n\n## Debug DWG package issues\n\n\nDuring the Conversion process, if there are any issues with the DWG package [errors and warnings](https://aka.ms/am-conversion-errors) are provided in the response along with a *diagnostic package* to visualize \nand diagnose these issues. In case any issues are encountered with your DWG package, the Conversion operation status process as detailed \n[here](https://aka.ms/am-creator-lrt) returns the location of the *diagnostic\npackage* that can be downloaded by the caller to help them visualize and diagnose these issues. The *diagnostic package* location\ncan be found in the properties section of the conversion operation status response and looks like the following:\n\n```json\n{\n    \"properties\": {\n        \"diagnosticPackageLocation\": \"https://atlas.microsoft.com/mapdata/{DiagnosticPackageId}?api-version=1.0\"                \n    }            \n}\n```\n\nThe *diagnostic package* can be downloaded by executing a `HTTP GET` request on the `diagnosticPackageLocation`.\nFor more details on how to use the tool to visualize and diagnose all the errors and warnings see [Drawing Error Visualizer](https://aka.ms/am-drawing-errors-visualizer). <br>\n\nA conversion operation will be marked as *success* if there are zero or more warnings but will be marked as *failed* if any errors are encountered. ",
         "operationId": "Conversion_ConvertPreview",
@@ -185,6 +177,13 @@
           }
         },
         "parameters": [
+          {
+            "name": "conversionId",
+            "description": "A unique id for the output of this conversion",
+            "in": "path",
+            "type": "string",
+            "required": true
+          },
           {
             "$ref": "#/parameters/ClientId"
           },
@@ -206,10 +205,7 @@
         ],
         "responses": {
           "201": {
-            "$ref": "#/responses/201Async"
-          },
-          "202": {
-            "$ref": "#/responses/202Async"
+            "$ref": "#/responses/201"
           },
           "400": {
             "$ref": "#/responses/400"
@@ -227,55 +223,7 @@
             "$ref": "#/responses/500"
           }
         }
-      }
-    },
-    "/conversion": {
-      "get": {
-        "x-publish": true,
-        "description": "**Conversion List API**\n\n**Applies to:** S1 pricing tier.<br>\n\nCreator makes it possible to develop applications based on your private indoor map data using Azure Maps API and SDK. The Conversion API is part of Creator.<br>\n\nThis API allows the caller to fetch a list of all successful data conversions submitted previously using the [Conversion API](https://docs.microsoft.com/en-us/rest/api/maps/conversion/convertpreview).   \n\n### Submit List Request\n\nTo list all successful conversions you will issue a `GET` request with no additional parameters.\n\n### List Data Response\n\nThe Conversion List API returns the complete list of all conversion details in `json` format.<br>\n\nHere is a sample response returning the details of two successful conversion requests:  \n\n<br>\n\n```json\n{\n    \"conversions\": \n    [\n        {\n            \"conversionId\": \"54398242-ea6c-1f31-4fa6-79b1ae0fc24d\",\n            \"udid\": \"31838736-8b84-11ea-bc55-0242ac130003\",\n            \"created\": \"5/19/2020 9:00:00 AM +00:00\",\n            \"description\": \"User provided description.\",\n            \"featureCounts\": {\n                \"DIR\": 1,\n                \"LVL\": 3,\n                \"FCL\": 1,\n                \"UNIT\": 150,\n                \"CTG\": 8,\n                \"AEL\": 0,\n                \"OPN\": 10\n            }\n        },\n        {\n            \"conversionId\": \"2acf7d32-8b84-11ea-bc55-0242ac130003\",\n            \"udid\": \"1214bc58-8b84-11ea-bc55-0242ac1300039\",\n            \"created\": \"5/19/2020 9:00:00 AM +00:00\",\n            \"description\": \"User provided description.\",\n            \"featureCounts\": {\n                \"DIR\": 1,\n                \"LVL\": 3,\n                \"FCL\": 1,\n                \"UNIT\": 150,\n                \"CTG\": 8,\n                \"AEL\": 0,\n                \"OPN\": 10\n            }\n        }\n    ]\n}\n```\n\n<br>",
-        "operationId": "Conversion_ListPreview",
-        "x-ms-examples": {
-          "Returns a list of all the data processed by the Conversion Service for the account": {
-            "$ref": "./examples/List.json"
-          }
-        },
-        "parameters": [
-          {
-            "$ref": "#/parameters/ClientId"
-          },
-          {
-            "$ref": "#/parameters/SubscriptionKey"
-          },
-          {
-            "$ref": "#/parameters/ApiVersion"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "List request completed successfully.",
-            "schema": {
-              "$ref": "#/definitions/ConversionListResponse"
-            }
-          },
-          "400": {
-            "$ref": "#/responses/400"
-          },
-          "401": {
-            "$ref": "#/responses/401"
-          },
-          "403": {
-            "$ref": "#/responses/403"
-          },
-          "404": {
-            "$ref": "#/responses/404"
-          },
-          "500": {
-            "$ref": "#/responses/500"
-          }
-        }
-      }
-    },
-    "/conversion/{conversionId}": {
+      },
       "delete": {
         "x-publish": true,
         "description": "**Conversion Delete API**\n\n**Applies to:** S1 pricing tier.<br>\n\nCreator makes it possible to develop applications based on your private indoor map data using Azure Maps API and SDK. The Delete API is part of Creator.<br>\n\nThis API allows the caller to delete any data conversions created previously using the [Conversion API](https://docs.microsoft.com/en-us/rest/api/maps/conversion/convertpreview).\n\n### Submit Delete Request\n\nTo delete your conversion data you will issue a `DELETE` request where the path will contain the `conversionId` of the data to delete.\n\n### Conversion Delete Response\n\nThe Conversion Delete API returns a HTTP `204 No Content` response with an empty body, if the converted data resources were deleted successfully.<br>    \nA HTTP `400 Bad Request` error response will be returned if no resource associated with the passed-in `conversionId` is found.    ",
@@ -301,9 +249,97 @@
         ],
         "responses": {
           "204": {
-            "description": "Conversion delete request completed successfully. The content for `conversionId` was deleted on the server.",
+            "$ref": "#/responses/201"
+          },
+          "400": {
+            "$ref": "#/responses/400"
+          },
+          "401": {
+            "$ref": "#/responses/401"
+          },
+          "403": {
+            "$ref": "#/responses/403"
+          },
+          "404": {
+            "$ref": "#/responses/404"
+          },
+          "500": {
+            "$ref": "#/responses/500"
+          }
+        }
+      },
+
+      "get": {
+        "x-publish": true,
+        "description": "**Conversion Get API**\n\n**Applies to:** S1 pricing tier.<br>\n\nCreator makes it possible to develop applications based on your private indoor map data using Azure Maps API and SDK. The Conversion API is part of Creator.<br>\n\nThis API allows the caller to fetch a list of all successful data conversions submitted previously using the [Conversion API](https://docs.microsoft.com/en-us/rest/api/maps/conversion/convertpreview).   \n\n### Submit List Request\n\nTo list all successful conversions you will issue a `GET` request with no additional parameters.\n\n### List Data Response\n\nThe Conversion List API returns the complete list of all conversion details in `json` format.<br>\n\nHere is a sample response returning the details of two successful conversion requests:  \n\n<br>\n\n```json\n{\n    \"conversions\": \n    [\n        {\n            \"conversionId\": \"54398242-ea6c-1f31-4fa6-79b1ae0fc24d\",\n            \"udid\": \"31838736-8b84-11ea-bc55-0242ac130003\",\n            \"created\": \"5/19/2020 9:00:00 AM +00:00\",\n            \"description\": \"User provided description.\",\n            \"featureCounts\": {\n                \"DIR\": 1,\n                \"LVL\": 3,\n                \"FCL\": 1,\n                \"UNIT\": 150,\n                \"CTG\": 8,\n                \"AEL\": 0,\n                \"OPN\": 10\n            }\n        },\n        {\n            \"conversionId\": \"2acf7d32-8b84-11ea-bc55-0242ac130003\",\n            \"udid\": \"1214bc58-8b84-11ea-bc55-0242ac1300039\",\n            \"created\": \"5/19/2020 9:00:00 AM +00:00\",\n            \"description\": \"User provided description.\",\n            \"featureCounts\": {\n                \"DIR\": 1,\n                \"LVL\": 3,\n                \"FCL\": 1,\n                \"UNIT\": 150,\n                \"CTG\": 8,\n                \"AEL\": 0,\n                \"OPN\": 10\n            }\n        }\n    ]\n}\n```\n\n<br>",
+        "operationId": "Conversion_GetPreview",
+        "x-ms-examples": {
+          "Returns a list of all the data processed by the Conversion Service for the account": {
+            "$ref": "./examples/List.json"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/parameters/ConversionId"
+          },
+          {
+            "$ref": "#/parameters/ClientId"
+          },
+          {
+            "$ref": "#/parameters/SubscriptionKey"
+          },
+          {
+            "$ref": "#/parameters/ApiVersion"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/200"
+          },
+          "400": {
+            "$ref": "#/responses/400"
+          },
+          "401": {
+            "$ref": "#/responses/401"
+          },
+          "403": {
+            "$ref": "#/responses/403"
+          },
+          "404": {
+            "$ref": "#/responses/404"
+          },
+          "500": {
+            "$ref": "#/responses/500"
+          }
+        }
+      }
+    },
+    "/conversions": {
+      "get": {
+        "x-publish": true,
+        "description": "**Conversion List API**\n\n**Applies to:** S1 pricing tier.<br>\n\nCreator makes it possible to develop applications based on your private indoor map data using Azure Maps API and SDK. The Conversion API is part of Creator.<br>\n\nThis API allows the caller to fetch a list of all successful data conversions submitted previously using the [Conversion API](https://docs.microsoft.com/en-us/rest/api/maps/conversion/convertpreview).   \n\n### Submit List Request\n\nTo list all successful conversions you will issue a `GET` request with no additional parameters.\n\n### List Data Response\n\nThe Conversion List API returns the complete list of all conversion details in `json` format.<br>\n\nHere is a sample response returning the details of two successful conversion requests:  \n\n<br>\n\n```json\n{\n    \"conversions\": \n    [\n        {\n            \"conversionId\": \"54398242-ea6c-1f31-4fa6-79b1ae0fc24d\",\n            \"udid\": \"31838736-8b84-11ea-bc55-0242ac130003\",\n            \"created\": \"5/19/2020 9:00:00 AM +00:00\",\n            \"description\": \"User provided description.\",\n            \"featureCounts\": {\n                \"DIR\": 1,\n                \"LVL\": 3,\n                \"FCL\": 1,\n                \"UNIT\": 150,\n                \"CTG\": 8,\n                \"AEL\": 0,\n                \"OPN\": 10\n            }\n        },\n        {\n            \"conversionId\": \"2acf7d32-8b84-11ea-bc55-0242ac130003\",\n            \"udid\": \"1214bc58-8b84-11ea-bc55-0242ac1300039\",\n            \"created\": \"5/19/2020 9:00:00 AM +00:00\",\n            \"description\": \"User provided description.\",\n            \"featureCounts\": {\n                \"DIR\": 1,\n                \"LVL\": 3,\n                \"FCL\": 1,\n                \"UNIT\": 150,\n                \"CTG\": 8,\n                \"AEL\": 0,\n                \"OPN\": 10\n            }\n        }\n    ]\n}\n```\n\n<br>",
+        "operationId": "Conversion_ListPreview",
+        "x-ms-examples": {
+          "Returns a list of all the data processed by the Conversion Service for the account": {
+            "$ref": "./examples/List.json"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/parameters/ClientId"
+          },
+          {
+            "$ref": "#/parameters/SubscriptionKey"
+          },
+          {
+            "$ref": "#/parameters/ApiVersion"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List request completed successfully.",
             "schema": {
-              "$ref": "#/definitions/ConversionDeleteResponse"
+              "$ref": "#/definitions/ConversionListResponse"
             }
           },
           "400": {
@@ -377,6 +413,7 @@
             "NotStarted",
             "Running",
             "Failed",
+            "Canceled",
             "Succeeded"
           ],
           "x-ms-enum": {
@@ -394,6 +431,10 @@
               {
                 "value": "Failed",
                 "description": "The request has one or more failures."
+              },
+              {
+                "value": "Canceled",
+                "description": "The request has been canceled."
               },
               {
                 "value": "Succeeded",
@@ -444,6 +485,9 @@
           "type": "string",
           "readOnly": true
         },
+        "status": {
+          "$ref": "#/definitions/LongRunningOperationResult"
+        },
         "udid": {
           "description": "The unique id of the content provided to create this conversion.",
           "type": "string",
@@ -465,10 +509,6 @@
           "readOnly": true
         }
       }
-    },
-    "ConversionDeleteResponse": {
-      "description": "The response model for the Conversion Delete API. The response body will be empty signifying there's no content available for the `conversionId` anymore.",
-      "type": "object"
     }
   }
 }

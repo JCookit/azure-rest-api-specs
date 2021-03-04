@@ -2,7 +2,7 @@
   "swagger": "2.0",
   "info": {
     "title": "Azure Maps Tileset Service",
-    "version": "1.0",
+    "version": "2.0",
     "description": "APIs for managing Tilesets."
   },
   "host": "atlas.microsoft.com",
@@ -75,27 +75,19 @@
         "$ref": "#/definitions/ODataErrorResponse"
       }
     },
-    "201Async": {
+    "201": {
       "description": "The resource has been created successfully.",
       "schema": {
-        "$ref": "#/definitions/LongRunningOperationResult"
-      },
-      "headers": {
-        "Location": {
-          "type": "string",
-          "description": "A URI where details on the newly created resource can be found."
-        }
+        "$ref": "#/definitions/TilesetDetailInfo"
       }
     },
-    "202Async": {
-      "description": "**Supported only for async request.**\nRequest Accepted: The request has been accepted for processing. Please use the URL in the Location Header to retry or access the results.",
-      "headers": {
-        "Location": {
-          "type": "string",
-          "description": "New URL to check for the results of the long running process."
-        }
+    "200": {
+      "description": "The resource.",
+      "schema": {
+        "$ref": "#/definitions/TilesetDetailInfo"
       }
     }
+
   },
   "parameters": {
     "ClientId": {
@@ -120,7 +112,7 @@
       "type": "string",
       "in": "query",
       "required": true,
-      "default": "1.0",
+      "default": "2.0",
       "x-ms-parameter-location": "client"
     },
     "JsonFormat": {
@@ -170,8 +162,8 @@
     }
   },
   "paths": {
-    "/tileset/create/vector": {
-      "post": {
+    "/tilesets/{tilesetId}": {
+      "put": {
         "x-publish": true,
         "description": "**Tileset Create API**\n\n**Applies to**: S1 pricing tier.\n\nCreator makes it possible to develop applications based on your private indoor map data using Azure Maps API \nand SDK. The Tileset API is part of Creator.\n\nThe Tileset Create API allows the caller to create a tileset from a dataset. A tileset contains a set of tiles that can be consumed \nfrom the [Get Map Tile](/rest/api/maps/render/getmaptile) to retrieve custom tiles. To make a dataset, use the \n[DataSet Create API](/rest/api/maps/dataset/createpreview).\n\n## Submit Create Request\n\nTo create your tileset you will make a `POST` request with an empty body. The `datasetId` query parameter will be \nused as the source of the tileset data.\n\nThe Create Tileset API is a \n[long-running request](https://aka.ms/am-creator-lrt).",
         "operationId": "Tileset_CreatePreview",
@@ -185,6 +177,13 @@
           }
         },
         "parameters": [
+          {
+            "name": "tilesetId",
+            "description": "A unique id for the new tileset",
+            "in": "path",
+            "type": "string",
+            "required": true
+          },
           {
             "$ref": "#/parameters/ClientId"
           },
@@ -203,10 +202,103 @@
         ],
         "responses": {
           "201": {
-            "$ref": "#/responses/201Async"
+            "$ref": "#/responses/201"
           },
-          "202": {
-            "$ref": "#/responses/202Async"
+          "400": {
+            "$ref": "#/responses/400"
+          },
+          "401": {
+            "$ref": "#/responses/401"
+          },
+          "403": {
+            "$ref": "#/responses/403"
+          },
+          "404": {
+            "$ref": "#/responses/404"
+          },
+          "500": {
+            "$ref": "#/responses/500"
+          }
+        }
+      },
+
+
+      "delete": {
+        "x-publish": true,
+        "description": "**Tileset Delete API**\n\n**Applies to:** S1 pricing tier.\n<br>\n\nCreator makes it possible to develop applications based on your private indoor map data using Azure Maps API and SDK. The Tileset API is part of Creator.\nThis API allows the caller to delete a created tileset.<br>    \nYou can use this API if a tileset is no longer needed. \n\n### Submit Delete Request\n\nTo delete your content you will issue a `DELETE` request where the path will contain the `tilesetId` of the tileset to delete.<br>    \n\n#### Delete request \"Successful\"\n\nThe Tileset Delete API returns a HTTP `204 No Content` response with an empty body, if the tileset was deleted successfully.<br>    \n\n#### Delete request \"Failed\"\n\nA HTTP `400 Bad Request` error response will be returned if the tileset with the passed-in `tilesetId` is not found. \n\nHere is a sample error response:\n\n<br>\n\n```json\n{\n  \"error\": {\n      \"code\": \"400 BadRequest\",\n      \"message\": \"Bad request - Tileset Id: d85b5b27-5fc4-4599-8b50-47160e90f8ce does not exist.\"\n  }\n}\n```",
+        "operationId": "Tileset_DeletePreview",
+        "x-ms-examples": {
+          "Delete a created tileset": {
+            "$ref": "./examples/Delete.json"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/parameters/ClientId"
+          },
+          {
+            "$ref": "#/parameters/SubscriptionKey"
+          },
+          {
+            "$ref": "#/parameters/ApiVersion"
+          },
+          {
+            "$ref": "#/parameters/TilesetId"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Tileset delete request completed successfully.",
+            "schema": {
+              "$ref": "#/definitions/TilesetDetailInfo"
+            }
+          },
+          "400": {
+            "$ref": "#/responses/400"
+          },
+          "401": {
+            "$ref": "#/responses/401"
+          },
+          "403": {
+            "$ref": "#/responses/403"
+          },
+          "404": {
+            "$ref": "#/responses/404"
+          },
+          "500": {
+            "$ref": "#/responses/500"
+          }
+        }
+      },
+      "get": {
+        "x-publish": true,
+        "description": "**Tileset List API**\n\n**Applies to:** S1 pricing tier.\n<br>\n\nCreator makes it possible to develop applications based on your private indoor map data using Azure Maps API and SDK. The Tileset API is part of Creator.\nThis API allows the caller to fetch a list of all tilesets created.   \n<br>",
+        "operationId": "Tileset_GetPreview",
+        "x-ms-examples": {
+          "Get a list of all tilesets": {
+            "$ref": "./examples/List.json"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/parameters/TilesetId"
+          },
+          {
+            "$ref": "#/parameters/ClientId"
+          },
+          {
+            "$ref": "#/parameters/SubscriptionKey"
+          },
+          {
+            "$ref": "#/parameters/ApiVersion"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/TilesetDetailInfo"
+            }
           },
           "400": {
             "$ref": "#/responses/400"
@@ -225,8 +317,9 @@
           }
         }
       }
+
     },
-    "/tileset": {
+    "/tilesets": {
       "get": {
         "x-publish": true,
         "description": "**Tileset List API**\n\n**Applies to:** S1 pricing tier.\n<br>\n\nCreator makes it possible to develop applications based on your private indoor map data using Azure Maps API and SDK. The Tileset API is part of Creator.\nThis API allows the caller to fetch a list of all tilesets created.   \n<br>",
@@ -272,55 +365,7 @@
         }
       }
     },
-    "/tileset/{tilesetId}": {
-      "delete": {
-        "x-publish": true,
-        "description": "**Tileset Delete API**\n\n**Applies to:** S1 pricing tier.\n<br>\n\nCreator makes it possible to develop applications based on your private indoor map data using Azure Maps API and SDK. The Tileset API is part of Creator.\nThis API allows the caller to delete a created tileset.<br>    \nYou can use this API if a tileset is no longer needed. \n\n### Submit Delete Request\n\nTo delete your content you will issue a `DELETE` request where the path will contain the `tilesetId` of the tileset to delete.<br>    \n\n#### Delete request \"Successful\"\n\nThe Tileset Delete API returns a HTTP `204 No Content` response with an empty body, if the tileset was deleted successfully.<br>    \n\n#### Delete request \"Failed\"\n\nA HTTP `400 Bad Request` error response will be returned if the tileset with the passed-in `tilesetId` is not found. \n\nHere is a sample error response:\n\n<br>\n\n```json\n{\n  \"error\": {\n      \"code\": \"400 BadRequest\",\n      \"message\": \"Bad request - Tileset Id: d85b5b27-5fc4-4599-8b50-47160e90f8ce does not exist.\"\n  }\n}\n```",
-        "operationId": "Tileset_DeletePreview",
-        "x-ms-examples": {
-          "Delete a created tileset": {
-            "$ref": "./examples/Delete.json"
-          }
-        },
-        "parameters": [
-          {
-            "$ref": "#/parameters/ClientId"
-          },
-          {
-            "$ref": "#/parameters/SubscriptionKey"
-          },
-          {
-            "$ref": "#/parameters/ApiVersion"
-          },
-          {
-            "$ref": "#/parameters/TilesetId"
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Tileset delete request completed successfully.",
-            "schema": {
-              "$ref": "#/definitions/TilesetDeleteResponse"
-            }
-          },
-          "400": {
-            "$ref": "#/responses/400"
-          },
-          "401": {
-            "$ref": "#/responses/401"
-          },
-          "403": {
-            "$ref": "#/responses/403"
-          },
-          "404": {
-            "$ref": "#/responses/404"
-          },
-          "500": {
-            "$ref": "#/responses/500"
-          }
-        }
-      }
-    }
+
   },
   "definitions": {
     "ODataErrorResponse": {
@@ -374,6 +419,7 @@
             "NotStarted",
             "Running",
             "Failed",
+            "Canceled",
             "Succeeded"
           ],
           "x-ms-enum": {
@@ -391,6 +437,10 @@
               {
                 "value": "Failed",
                 "description": "The request has one or more failures."
+              },
+              {
+                "value": "Canceled",
+                "description": "The request has been canceled."
               },
               {
                 "value": "Succeeded",
@@ -441,6 +491,9 @@
           "type": "string",
           "readOnly": true
         },
+        "status": {
+          "$ref": "#/definitions/LongRunningOperationResult"
+        },
         "datasetId": {
           "description": "The unique dataset Id used to create the tileset.",
           "type": "string",
@@ -470,10 +523,6 @@
           }
         }
       }
-    },
-    "TilesetDeleteResponse": {
-      "description": "The response model for the Delete API. The response body will be empty signifying there's no content available for the `tilesetId` anymore.",
-      "type": "object"
     }
   }
 }
